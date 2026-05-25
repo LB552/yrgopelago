@@ -142,8 +142,8 @@ function updateUI() {
         }
     }
 
-    // Bundle discount: if both yahtzee and bicycle, save 1 credit
-    if (features.includes('yahtzee') && features.includes('bicycle')) {
+    // Bundle discount: if both yahtzee and bicycle, save 1 credit (only for budget)
+    if (roomTier === 'budget' && features.includes('yahtzee') && features.includes('bicycle')) {
         featureCost -= 1;
     }
 
