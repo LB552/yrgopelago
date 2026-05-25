@@ -24,6 +24,46 @@
         ?>
     </div>
 
+    <?php
+    $day = 1;
+    for ($i = 0; $i < 6; $i++) { ?>
+        <div class="hori">
+            <?php for ($j = 0; $j < 7; $j++) {
+
+                $class = 'date';
+                $content = '';
+                $dateAttr = '';
+
+                // Days (mon-sun)
+                if ($i === 0) {
+                    $class = 'dayDate';
+                }
+
+                // First 4 squares on top row (Mon-Thu, before Fri May 1)
+                if ($i === 1 && $j < 4) {
+                    $class = 'dullDate';
+                }
+
+                // Put day number only on valid dates
+                if ($class === 'date' && $day <= 31) {
+                    $content = $day;
+                    $dateAttr = 'data-date="2026-05-' . str_pad($day, 2, '0', STR_PAD_LEFT) . '"';
+                    $day++;
+                } else if ($class === 'date' && $day > 31) {
+                    $class = 'dullDate';
+                }
+
+                // Put days (mon-sun)
+                $weekday = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+                if ($class === 'dayDate' && $i === 0) {
+                    $content = $weekday[$j];
+                }
+            ?>
+                <div class="<?= $class ?>" <?= $dateAttr ?>><?= $content ?></div>
+            <?php } ?>
+        </div>
+    <?php } ?>
+
     <form id="bookingForm">
 
         <h3>Rooms</h3>

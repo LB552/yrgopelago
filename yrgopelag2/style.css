@@ -20,3 +20,39 @@ label {
     display: flex;
     flex-direction: row;
 }
+
+.date {
+    height: 40px;
+    width: 40px;
+    margin: 5px;
+    background-color: aqua;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid transparent;
+}
+
+.date.booked {
+    background-color: #ffb3ba;
+}
+
+.date.selected {
+    border: 3px solid black;
+}
+.dullDate {
+    height: 40px;
+    width: 40px;
+    margin: 5px;
+    background-color: transparent;
+    border: 3px solid transparent;
+}
+.dayDate {
+    height: 40px;
+    width: 40px;
+    margin: 5px;
+    background-color: transparent;
+}
+
+.calendarBorder {
+    border: 3px solid palevioletred;
+}

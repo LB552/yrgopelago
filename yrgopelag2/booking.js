@@ -37,23 +37,27 @@ function renderRooms() {
 
     container.innerHTML = '';
 
+    const select = document.createElement('select');
+    select.id = 'roomTier';
+    select.name = 'roomTier';
+    select.required = true;
+
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Select a room';
+    select.appendChild(defaultOption);
+
     for (const [tier, price] of Object.entries(ROOM_PRICES)) {
-        const label = document.createElement('label');
-
-        label.className = 'hori';
-
-        label.innerHTML = `
-            <input
-                type="radio"
-                name="roomTier"
-                value="${tier}"
-                ${tier === 'budget' ? 'required' : ''}
-            >
-            ${capitalize(tier)} (${price}/night)
-        `;
-
-        container.appendChild(label);
+        const option = document.createElement('option');
+        option.value = tier;
+        option.textContent = `${capitalize(tier)} (${price}/night)`;
+        if (tier === 'budget') {
+            option.selected = true;
+        }
+        select.appendChild(option);
     }
+
+    container.appendChild(select);
 }
 
 renderRooms();
@@ -107,7 +111,7 @@ renderFeatures();
 // UI UPDATE
 // -------------------------
 function updateUI() {
-    const roomTier = document.querySelector('input[name="roomTier"]:checked')?.value;
+    const roomTier = document.getElementById('roomTier')?.value;
 
     const checkIn = document.getElementById('checkIn').value;
     const checkOut = document.getElementById('checkOut').value;
@@ -150,6 +154,67 @@ function updateUI() {
     roomTotalEl.textContent = roomTotal;
     featureCostEl.textContent = featureCost;
     totalEl.textContent = total;
+
+    // Update calendar with booked dates for this room tier
+    if (roomTier) {
+        updateCalendar(roomTier);
+    }
+
+    // Update selected date range highlighting
+    updateSelectedDates(checkIn, checkOut);
+}
+
+// -------------------------
+// UPDATE SELECTED DATES
+// -------------------------
+function updateSelectedDates(checkIn, checkOut) {
+    // Clear all selected classes
+    document.querySelectorAll('.date').forEach(el => {
+        el.classList.remove('selected');
+    });
+
+    // If only check-in is set, highlight it
+    if (checkIn && !checkOut) {
+        const el = document.querySelector(`[data-date="${checkIn}"]`);
+        if (el) el.classList.add('selected');
+        return;
+    }
+
+    // If both are set, highlight the range
+    if (checkIn && checkOut) {
+        const start = new Date(checkIn);
+        const end = new Date(checkOut);
+        let current = new Date(start);
+
+        while (current <= end) {
+            const dateStr = current.toISOString().split('T')[0];
+            const el = document.querySelector(`[data-date="${dateStr}"]`);
+            if (el) el.classList.add('selected');
+            current.setDate(current.getDate() + 1);
+        }
+    }
+}
+
+// -------------------------
+// UPDATE CALENDAR
+// -------------------------
+async function updateCalendar(roomTier) {
+    const response = await fetch(`get_availability.php?roomTier=${encodeURIComponent(roomTier)}`);
+    const data = await response.json();
+    const bookedDates = new Set(data.bookedDates || []);
+
+    // Clear all booked classes
+    document.querySelectorAll('.date').forEach(el => {
+        el.classList.remove('booked');
+    });
+
+    // Add booked class to booked dates
+    document.querySelectorAll('.date[data-date]').forEach(el => {
+        const date = el.getAttribute('data-date');
+        if (bookedDates.has(date)) {
+            el.classList.add('booked');
+        }
+    });
 }
 
 
@@ -157,8 +222,15 @@ function updateUI() {
 // EVENT LISTENERS
 // -------------------------
 document.querySelectorAll(
-    '#checkIn, #checkOut, input[name="roomTier"], input[name="features"]'
+    '#checkIn, #checkOut, input[name="features"]'
 ).forEach(el => el.addEventListener('change', updateUI));
+
+document.addEventListener('DOMContentLoaded', () => {
+    const roomSelect = document.getElementById('roomTier');
+    if (roomSelect) {
+        roomSelect.addEventListener('change', updateUI);
+    }
+});
 
 updateUI();
 
@@ -170,7 +242,7 @@ document.getElementById('bookingForm')
 .addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const roomTier = document.querySelector('input[name="roomTier"]:checked')?.value;
+    const roomTier = document.getElementById('roomTier').value;
     const checkIn = document.getElementById('checkIn').value;
     const checkOut = document.getElementById('checkOut').value;
 
