@@ -1,4 +1,6 @@
 <?php
+error_log("Booking received: " . json_encode($_POST ?? json_decode(file_get_contents('php://input'), true)));
+
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 header('Content-Type: application/json');
