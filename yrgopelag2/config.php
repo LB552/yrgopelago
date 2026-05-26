@@ -3,7 +3,7 @@
 const CENTRAL_BANK = 'https://www.yrgopelag.se';
 const HOTEL_OWNER = 'Anton';
 const HOTEL_API_KEY = 'e95ad03a-e09b-44e1-b239-b91427a0ddc8';
-const HOTEL_STAR_RATING = 0;
+const HOTEL_STAR_RATING = 2;
 
 const FEATURE_GRID = [
     'water' => [

@@ -12,6 +12,8 @@
 
     <h1>Revered</h1>
 
+    <p>Special offer for budget rooms: Select both yahtzee and bicycle to save 1 credit</p>
+
     <div class="stars">
         <?php
         for ($i = 0; $i < HOTEL_STAR_RATING; $i++) {
