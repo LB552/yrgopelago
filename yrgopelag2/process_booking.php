@@ -1,6 +1,4 @@
 <?php
-error_log("Booking received: " . json_encode($_POST ?? json_decode(file_get_contents('php://input'), true)));
-
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 header('Content-Type: application/json');
@@ -18,8 +16,6 @@ if (!$input) {
     exit;
 }
 
-$db = new SQLite3('bookings.db');
-
 function cbRequest($endpoint, $data)
 {
     $ctx = stream_context_create(['http' => [
@@ -35,18 +31,22 @@ $checkIn = $input['checkIn'];
 $checkOut = $input['checkOut'];
 $roomTier = $input['roomTier'];
 
-// Check room availability
-$result = $db->querySingle("
-    SELECT COUNT(*) as count FROM bookings 
-    WHERE room_tier = '" . $db->escapeString($roomTier) . "' 
-    AND (
-        (check_in < '$checkOut' AND check_out > '$checkIn')
-    )
-", SQLITE3_ASSOC);
+// Load bookings from JSON
+$bookings = json_decode(file_get_contents('bookings.json'), true) ?? [];
 
-if ($result['count'] > 0) {
+// Check room availability
+$conflict = false;
+foreach ($bookings as $booking) {
+    if ($booking['room_tier'] === $roomTier) {
+        if (!(strtotime($checkOut) <= strtotime($booking['check_in']) || strtotime($checkIn) >= strtotime($booking['check_out']))) {
+            $conflict = true;
+            break;
+        }
+    }
+}
+
+if ($conflict) {
     echo json_encode(['error' => 'Room not available for selected dates']);
-    $db->close();
     exit;
 }
 
@@ -58,7 +58,6 @@ $validate = cbRequest('/centralbank/transferCode', [
 
 if (!$validate || isset($validate['error'])) {
     echo json_encode(['error' => $validate['error'] ?? 'Invalid transfer code']);
-    $db->close();
     exit;
 }
 
@@ -74,24 +73,23 @@ $receiptRes = cbRequest('/centralbank/receipt', [
 
 if (isset($receiptRes['error'])) {
     echo json_encode(['error' => 'Receipt failed: ' . $receiptRes['error']]);
-    $db->close();
     exit;
 }
 
-// Store booking
-$featuresJson = json_encode($input['features'] ?? []);
-$stmt = $db->prepare("
-    INSERT INTO bookings (username, room_tier, check_in, check_out, features, total_cost, transfer_code)
-    VALUES (:username, :room_tier, :check_in, :check_out, :features, :total_cost, :transfer_code)
-");
-$stmt->bindValue(':username', $input['username'], SQLITE3_TEXT);
-$stmt->bindValue(':room_tier', $roomTier, SQLITE3_TEXT);
-$stmt->bindValue(':check_in', $checkIn, SQLITE3_TEXT);
-$stmt->bindValue(':check_out', $checkOut, SQLITE3_TEXT);
-$stmt->bindValue(':features', $featuresJson, SQLITE3_TEXT);
-$stmt->bindValue(':total_cost', $input['totalCost'], SQLITE3_INTEGER);
-$stmt->bindValue(':transfer_code', $input['transferCode'], SQLITE3_TEXT);
-$stmt->execute();
+// Store booking in JSON
+$newBooking = [
+    'username' => $input['username'],
+    'room_tier' => $roomTier,
+    'check_in' => $checkIn,
+    'check_out' => $checkOut,
+    'features' => $input['features'] ?? [],
+    'total_cost' => $input['totalCost'],
+    'transfer_code' => $input['transferCode'],
+    'created_at' => date('Y-m-d H:i:s')
+];
+
+$bookings[] = $newBooking;
+file_put_contents('bookings.json', json_encode($bookings, JSON_PRETTY_PRINT));
 
 // Deposit payment
 $deposit = cbRequest('/centralbank/deposit', [
@@ -101,9 +99,7 @@ $deposit = cbRequest('/centralbank/deposit', [
 
 if (!$deposit || isset($deposit['error'])) {
     echo json_encode(['error' => $deposit['error'] ?? 'Deposit failed']);
-    $db->close();
     exit;
 }
 
-$db->close();
 echo json_encode(['status' => 'success']);
