@@ -21,6 +21,31 @@ label {
     flex-direction: row;
 }
 
+#featuresContainer {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+}
+
+#featuresContainer > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#featuresContainer h3 {
+    margin: 0 0 10px 0;
+    text-align: center;
+}
+
+#featuresContainer label {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
 .date {
     height: 40px;
     width: 40px;
