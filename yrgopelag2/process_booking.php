@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 error_log("Booking received: " . json_encode($_POST ?? json_decode(file_get_contents('php://input'), true)));
 
 ini_set('display_errors', 0);
