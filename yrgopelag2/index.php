@@ -53,7 +53,7 @@ require_once 'config.php';
                 // Put day number only on valid dates
                 if ($class === 'date' && $day <= 31) {
                     $content = $day;
-                    $dateAttr = 'data-date="2026-05-' . str_pad($day, 2, '0', STR_PAD_LEFT) . '"';
+                    $dateAttr = 'data-date="2026-05-' . str_pad((string)$day, 2, '0', STR_PAD_LEFT) . '"';
                     $day++;
                 } else if ($class === 'date' && $day > 31) {
                     $class = 'dullDate';
